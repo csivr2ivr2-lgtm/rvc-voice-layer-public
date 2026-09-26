@@ -1,0 +1,35 @@
+# Voice/data assets
+*.wav
+*.mp3
+*.flac
+*.ogg
+*.m4a
+*.pth
+*.index
+*.ckpt
+*.pt
+*.onnx
+
+# Local datasets/models/outputs
+dataset/*
+!dataset/.gitkeep
+models/*
+!models/.gitkeep
+output/*
+!output/.gitkeep
+
+# Local config
+.env
+config.local.json
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# OS / IDE
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
