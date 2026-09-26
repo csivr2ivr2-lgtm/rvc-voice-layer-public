@@ -8,7 +8,7 @@ if(-not (Get-Command py -ErrorAction SilentlyContinue)){
 }
 
 & py -3.12 --version
-if($LASTEXITCODE -ne 0){ throw 'Python 3.12 x64 is required. Python 3.14 alone is not enough for this RVC branch.' }
+if($LASTEXITCODE -ne 0){ throw 'Python 3.12 x64 is required.' }
 
 $work = Join-Path $env:PUBLIC 'rvc-local-installer'
 $zip = Join-Path $work 'rvc-main.zip'
@@ -34,22 +34,21 @@ if(Test-Path $InstallDir){
 Set-Location $InstallDir
 if(-not (Test-Path '.venv')){ & py -3.12 -m venv .venv }
 $python = Join-Path $InstallDir '.venv\Scripts\python.exe'
-$hf = Join-Path $InstallDir '.venv\Scripts\hf.exe'
 
 & $python -m pip install --upgrade pip 'setuptools<81' wheel
+if($LASTEXITCODE -ne 0){ throw 'Base packaging tools install failed.' }
 & $python -m pip install -r requirments_cpu_py312.txt
-& $python -m pip install --upgrade huggingface_hub
+if($LASTEXITCODE -ne 0){ throw 'RVC requirements install failed.' }
+& $python -m pip install 'huggingface_hub==0.36.2'
+if($LASTEXITCODE -ne 0){ throw 'huggingface_hub install failed.' }
 
-Write-Host 'Downloading HuBERT / RMVPE / pretrained models...' -ForegroundColor Cyan
-& $hf download lj1995/VoiceConversionWebUI --revision main --include 'hubert_base/*' --local-dir assets
-& $hf download lj1995/VoiceConversionWebUI rmvpe.pt --revision main --local-dir assets/rmvpe
-& $hf download lj1995/VoiceConversionWebUI rmvpe.onnx --revision main --local-dir assets/rmvpe
-& $hf download lj1995/VoiceConversionWebUI --revision main --include 'pretrained/*' 'pretrained_v2/*' --local-dir assets
-& $hf download lj1995/VoiceConversionWebUI mute.zip --revision main --local-dir .model-downloads
-& $python -m zipfile -e .model-downloads\mute.zip logs
+$downloader = Join-Path $PSScriptRoot 'download_rvc_models.py'
+& $python $downloader --rvc-dir $InstallDir
+if($LASTEXITCODE -ne 0){ throw 'Model asset download failed.' }
+
+& $python -m pip check
+if($LASTEXITCODE -ne 0){ throw 'Dependency conflicts detected.' }
 
 Write-Host ''
 Write-Host 'Installation complete.' -ForegroundColor Green
 Write-Host "RVC path: $InstallDir"
-Write-Host 'Start with:'
-Write-Host "  & '$python' '$InstallDir\webui.py'"
