@@ -1,4 +1,4 @@
-param([string]$InstallDir = "$env:LOCALAPPDATA\RVC")
+param([string]$InstallDir = "$env:PUBLIC\RVC")
 $ErrorActionPreference='Stop'
 
 Write-Host 'RVC local installer for i5-7500 / 12GB / Intel HD 630' -ForegroundColor Cyan
@@ -10,7 +10,7 @@ if(-not (Get-Command py -ErrorAction SilentlyContinue)){
 & py -3.12 --version
 if($LASTEXITCODE -ne 0){ throw 'Python 3.12 x64 is required. Python 3.14 alone is not enough for this RVC branch.' }
 
-$work = Join-Path $env:TEMP 'rvc-local-installer'
+$work = Join-Path $env:PUBLIC 'rvc-local-installer'
 $zip = Join-Path $work 'rvc-main.zip'
 $extract = Join-Path $work 'extract'
 $url = 'https://github.com/RVC-Project/Retrieval-based-Voice-Conversion-WebUI/archive/refs/heads/main.zip'
@@ -18,15 +18,17 @@ $url = 'https://github.com/RVC-Project/Retrieval-based-Voice-Conversion-WebUI/ar
 if(Test-Path $work){ Remove-Item $work -Recurse -Force }
 New-Item -ItemType Directory -Path $extract -Force | Out-Null
 Write-Host 'Downloading official RVC...' -ForegroundColor Cyan
-Invoke-WebRequest -Uri $url -OutFile $zip
-Expand-Archive -Path $zip -DestinationPath $extract -Force
+curl.exe -L $url -o $zip
+if($LASTEXITCODE -ne 0){ throw 'RVC download failed.' }
+tar.exe -xf $zip -C $extract
+if($LASTEXITCODE -ne 0){ throw 'RVC extraction failed.' }
 
-$src = Join-Path $extract 'Retrieval-based-Voice-Conversion-WebUI-main'
+$src = Get-ChildItem $extract -Directory | Select-Object -First 1
+if(-not $src){ throw 'Extracted RVC directory was not found.' }
 if(Test-Path $InstallDir){
   Write-Host "Using existing $InstallDir" -ForegroundColor Yellow
 } else {
-  New-Item -ItemType Directory -Path (Split-Path $InstallDir -Parent) -Force | Out-Null
-  Move-Item $src $InstallDir
+  Move-Item $src.FullName $InstallDir
 }
 
 Set-Location $InstallDir
