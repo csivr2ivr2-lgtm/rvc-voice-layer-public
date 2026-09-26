@@ -1,4 +1,4 @@
-param([string]$InstallDir='C:\RVC')
+param([string]$InstallDir = "$env:LOCALAPPDATA\RVC")
 $ErrorActionPreference='Stop'
 $python=Join-Path $InstallDir '.venv\Scripts\python.exe'
 if(-not (Test-Path $python)){ throw 'RVC is not installed. Run install_this_pc.ps1 first.' }

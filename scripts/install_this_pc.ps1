@@ -1,9 +1,5 @@
-param([string]$InstallDir='C:\RVC')
+param([string]$InstallDir = "$env:LOCALAPPDATA\RVC")
 $ErrorActionPreference='Stop'
-
-function Require-Command($name,$message){
-  if(-not (Get-Command $name -ErrorAction SilentlyContinue)){ throw $message }
-}
 
 Write-Host 'RVC local installer for i5-7500 / 12GB / Intel HD 630' -ForegroundColor Cyan
 
@@ -12,13 +8,14 @@ if(-not (Get-Command py -ErrorAction SilentlyContinue)){
 }
 
 & py -3.12 --version
-if($LASTEXITCODE -ne 0){ throw 'Python 3.12 x64 is required.' }
+if($LASTEXITCODE -ne 0){ throw 'Python 3.12 x64 is required. Python 3.14 alone is not enough for this RVC branch.' }
 
-$zip = Join-Path $env:TEMP 'rvc-main.zip'
-$extract = Join-Path $env:TEMP 'rvc-main-extract'
+$work = Join-Path $env:TEMP 'rvc-local-installer'
+$zip = Join-Path $work 'rvc-main.zip'
+$extract = Join-Path $work 'extract'
 $url = 'https://github.com/RVC-Project/Retrieval-based-Voice-Conversion-WebUI/archive/refs/heads/main.zip'
 
-if(Test-Path $extract){ Remove-Item $extract -Recurse -Force }
+if(Test-Path $work){ Remove-Item $work -Recurse -Force }
 New-Item -ItemType Directory -Path $extract -Force | Out-Null
 Write-Host 'Downloading official RVC...' -ForegroundColor Cyan
 Invoke-WebRequest -Uri $url -OutFile $zip
@@ -28,6 +25,7 @@ $src = Join-Path $extract 'Retrieval-based-Voice-Conversion-WebUI-main'
 if(Test-Path $InstallDir){
   Write-Host "Using existing $InstallDir" -ForegroundColor Yellow
 } else {
+  New-Item -ItemType Directory -Path (Split-Path $InstallDir -Parent) -Force | Out-Null
   Move-Item $src $InstallDir
 }
 
@@ -50,5 +48,6 @@ Write-Host 'Downloading HuBERT / RMVPE / pretrained models...' -ForegroundColor 
 
 Write-Host ''
 Write-Host 'Installation complete.' -ForegroundColor Green
+Write-Host "RVC path: $InstallDir"
 Write-Host 'Start with:'
 Write-Host "  & '$python' '$InstallDir\webui.py'"
